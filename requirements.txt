@@ -1,0 +1,16 @@
+fire
+lmdb
+natsort
+nltk
+numpy5
+opencv_contrib_python
+opencv_python
+opencv_python_headless
+pandas
+Pillow
+Pillow
+six
+torch
+torchvision
+ultralytics
+warpctc_pytorch
