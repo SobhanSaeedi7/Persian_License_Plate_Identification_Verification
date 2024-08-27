@@ -1,5 +1,6 @@
 import argparse
 import cv2
+import pandas
 
 from difflib import SequenceMatcher
 from ultralytics import YOLO
@@ -64,6 +65,8 @@ parser.add_argument("--dataset", type=str, default="license_plates.db")
 parser.add_argument("--input-image", type=str, default="io/input/IMG_5178.JPG")
 
 parser.add_argument("--threshold", type=float, default=0.6)
+parser.add_argument("--verification_mode", action='store_true', help='Verification The License Plates')
+parser.add_argument("--editor-mode", action='store_true', help='Edit Plates Dataset after Verifying')
 opt = parser.parse_args()
 
 
@@ -79,8 +82,6 @@ results = plate_detector.predict(image)
 for result in results:
 
     for i in range(len(result.boxes.xyxy)):
-
-        print(result.boxes.conf[i])
 
         if result.boxes.conf[i] > opt.threshold:
 
@@ -104,12 +105,46 @@ for result in results:
             plate = plate_recognizer.predict(plate_image, opt)
             
             dataset = database.show_plates()
-            
-            for i in dataset:
-                if SequenceMatcher(None, i[1], plate).ratio() > 0.8:
-                    print(True)
-                else:
+
+            if opt.verification_mode:
+                for i in dataset:
+                    check_in = False
+                    if SequenceMatcher(None, i[1], plate).ratio() > 0.8:
+                        print(True)
+                        check_in = True
+                        break
+                if check_in == False:
                     print(False)
+            
+            if opt.verification_mode and opt.editor_mode:
+                for i in dataset:
+                    if SequenceMatcher(None, i[1], plate).ratio() > 0.8:
+                        action = input('This License has already been registered.\nDelete(D), Show Data List(S), Exit(anything else) : ')
+                        
+                if check_in == False:
+                    action = input('This License Plate isn`t registered!\nAdd(A), Show Data List(S), Exit(anything else) : ')
+                    break
+                if action == 'S':
+                    plates = database.show_plates()
+                    column = ['Plate Owner', 'License Plate'] 
+                    df = pandas.DataFrame(plates, columns=column)
+                    print(df)
+
+                elif action == 'A':
+                    owner = input('Enter owner name : ')
+                    database.add_new(owner, plate)
+                    plates = database.show_plates()
+                    column = ['Plate Owner', 'License Plate'] 
+                    df = pandas.DataFrame(plates, columns=column)
+                    print(df)
+
+                elif action == 'D':
+                    database.remove_plate(plate)
+                    plates = database.show_plates()
+                    column = ['Plate Owner', 'License Plate'] 
+                    df = pandas.DataFrame(plates, columns=column)
+                    print(df)
+
 
 
 cv2.imwrite("io/output/image_result.jpg", image)

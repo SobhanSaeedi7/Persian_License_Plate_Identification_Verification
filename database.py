@@ -22,6 +22,7 @@ class Database():
         if self.cursor.execute(f"SELECT 1 FROM data WHERE license_plate = '{license_plate}'").fetchone() == None:
             self.cursor.execute(f"INSERT INTO data VALUES('{plate_owner}', '{license_plate}')")
             self.conn.commit()
+            print('Added successfully.')
         else:
             print('This Plate has already added!')
 
